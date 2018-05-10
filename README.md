@@ -11,6 +11,7 @@
     * [I want to run multiple instances of multiple versions of Tomcat](#i-want-to-run-multiple-instances-of-multiple-versions-of-tomcat)
     * [I want to configure SSL and specify which protocols and ciphers to use](#i-want-to-configure-ssl-and-specify-which-protocols-and-ciphers-to-use)
     * [I want to deploy WAR files.](#i-want-to-deploy-war-files)
+    * [I want to deploy JAR files.](#i-want-to-deploy-jar-files)
     * [I want to remove some configuration](#i-want-to-remove-some-configuration)
     * [I want to manage a Connector or Realm that already exists](#i-want-to-manage-a-connector-or-realm-that-already-exists)
 5. [Reference - An under-the-hood peek at what the module is doing and how](#reference)
@@ -188,6 +189,20 @@ tomcat::war { 'sample.war':
 The name of the WAR file must end with `.war`.
 
 The `war_source` can be a local path or a `puppet:///`, `http://`, or `ftp://` URL.
+
+### I want to deploy JAR files
+
+Add the following to any existing installation with your own jar source:
+```puppet
+tomcat::jar { 'mysql-connector-java.jar':
+  catalina_base => '/opt/tomcat9/first',
+  jar_source    => 'puppet:///modules/profile/mysql-connector-java.jar',
+}
+```
+
+The name of the JAR file must end with `.jar`.
+
+The `jar_source` can be a local path or a `puppet:///`, `http://`, or `ftp://` URL.
 
 ### I want to remove some configuration
 
