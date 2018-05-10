@@ -39,9 +39,10 @@ define tomcat::jar(
 ) {
   include ::tomcat
   $_catalina_base = pick($catalina_base, $::tomcat::catalina_home)
-  $_user          = pick($user, $::tomcat::user)
-  $_group         = pick($group, $::tomcat::group)
   tag(sha1($_catalina_base))
+
+  $_user  = pick($user, $::tomcat::user)
+  $_group = pick($group, $::tomcat::group)
 
   if $jar_base and $deployment_path {
     fail('Only one of $jar_base and $deployment_path can be specified.')
