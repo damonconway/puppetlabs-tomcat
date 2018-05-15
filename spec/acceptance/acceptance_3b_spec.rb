@@ -11,6 +11,8 @@ describe 'Tomcat Install source -defaults', docker: true, unless: stop_test do
 
   before :all do
     shell("curl --retry 5 --retry-delay 15 -k -o /tmp/sample.war '#{SAMPLE_WAR}'", acceptable_exit_codes: 0)
+    let(:file) { '/opt/apache-tomcat8/tomcat8/lib/hello.jar' }
+    expect(file).to be_an_existing_file
   end
 
   context 'Initial install Tomcat and verification' do
@@ -52,6 +54,12 @@ describe 'Tomcat Install source -defaults', docker: true, unless: stop_test do
         war_name       => 'tomcat8-sample.war',
         allow_insecure => true,
       }
+      tomcat::jar { 'tomcat8-sample.jar':
+        catalina_base  => '/opt/apache-tomcat8/tomcat8',
+        jar_source     => '#{SAMPLE_JAR}',
+        jar_name       => 'tomcat8-sample.jar',
+        allow_insecure => true,
+      }
     MANIFEST
     it 'applies the manifest without error' do
       apply_manifest(pp, catch_failures: true)
@@ -66,6 +74,10 @@ describe 'Tomcat Install source -defaults', docker: true, unless: stop_test do
       shell('curl --retry 5 --retry-delay 15 localhost:8180/tomcat8-sample/hello.jsp') do |r|
         r.stdout.should match(%r{Sample Application JSP Page})
       end
+    end
+    it 'contains the jar in the lib dir' do
+      let(:file) { '/opt/apache-tomcat8/tomcat8/lib/hello.jar' }
+      expect(file).to be_an_existing_file
     end
   end
 

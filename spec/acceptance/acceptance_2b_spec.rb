@@ -81,6 +81,18 @@ describe 'Two different installations with two instances each of Tomcat 7 in the
         war_name       => 'tomcat7#sample.war',
         allow_insecure => true,
       }
+      tomcat::jar { 'first tomcat7-sample.jar':
+        catalina_base  => '/opt/tomcat7-first',
+        jar_source     => '#{SAMPLE_JAR}',
+        jar_name       => 'tomcat7#sample.jar',
+        allow_insecure => true,
+      }
+      tomcat::jar { 'second tomcat7-sample.jar':
+        catalina_base  => '/opt/tomcat7-second',
+        jar_source     => '#{SAMPLE_JAR}',
+        jar_name       => 'tomcat7#sample.jar',
+        allow_insecure => true,
+      }
 
 
       tomcat::install { 'tomcat7078':
@@ -146,6 +158,18 @@ describe 'Two different installations with two instances each of Tomcat 7 in the
         catalina_base  => '/opt/tomcat7078-second',
         war_source     => '#{SAMPLE_WAR}',
         war_name       => 'tomcat7078-sample.war',
+        allow_insecure => true,
+      }
+      tomcat::jar { 'first tomcat7078-sample.jar':
+        catalina_base  => '/opt/tomcat7078-first',
+        jar_source     => '#{SAMPLE_JAR}',
+        jar_name       => 'tomcat7078-sample.jar',
+        allow_insecure => true,
+      }
+      tomcat::jar { 'second tomcat7078-sample.jar':
+        catalina_base  => '/opt/tomcat7078-second',
+        jar_source     => '#{SAMPLE_JAR}',
+        jar_name       => 'tomcat7078-sample.jar',
         allow_insecure => true,
       }
     MANIFEST
@@ -297,4 +321,75 @@ describe 'Two different installations with two instances each of Tomcat 7 in the
       end
     end
   end
+
+  context 'Start Tomcat without jar' do
+    pp = <<-MANIFEST
+      tomcat::jar { 'tomcat7078-sample.jar':
+        catalina_base => '/opt/tomcat7078-first',
+        jar_source    => '#{SAMPLE_JAR}',
+        jar_name      => 'tomcat7078-sample.jar',
+        jar_ensure    => 'absent',
+      }->
+      tomcat::service { 'tomcat7078-first':
+        catalina_home  => '/opt/apache-tomcat7078',
+        catalina_base  => '/opt/tomcat7078-first',
+        service_ensure => 'running',
+      }->
+      tomcat::jar { 'tomcat7-sample.jar':
+        catalina_base => '/opt/tomcat7-first',
+        jar_source    => '#{SAMPLE_JAR}',
+        jar_name      => 'tomcat7-sample.jar',
+        jar_ensure    => 'absent',
+      }->
+      tomcat::service { 'tomcat7-first':
+        catalina_home  => '/opt/apache-tomcat7',
+        catalina_base  => '/opt/tomcat7-first',
+        service_ensure => 'running',
+      }
+    MANIFEST
+    it 'applies the manifest without error' do
+      apply_manifest(pp, catch_failures: true, acceptable_exit_codes: [0, 2])
+    end
+    it 'tomcat7-first should not contain the jar when jar is not deployed' do
+        let(:file) { '/opt/tomcat7/first/lib/hello.jar' }
+        expect(file).not_to be_an_existing_file
+    end
+  end
+
+  context 'deploy the jar' do
+    pp = <<-MANIFEST
+      tomcat::jar { 'tomcat7-sample.jar':
+        catalina_base  => '/opt/tomcat7-first',
+        jar_source     => '#{SAMPLE_JAR}',
+        jar_name       => 'tomcat7-sample.jar',
+        jar_ensure     => 'present',
+        allow_insecure => true,
+      } ~>
+      tomcat::service { 'tomcat7-first':
+        catalina_home  => '/opt/apache-tomcat7',
+        catalina_base  => '/opt/tomcat7-first',
+        service_ensure => 'running',
+      }
+      tomcat::jar { 'tomcat7078-sample.jar':
+        catalina_base  => '/opt/tomcat7078-first',
+        jar_source     => '#{SAMPLE_JAR}',
+        jar_name       => 'tomcat7078-sample.jar',
+        jar_ensure     => 'present',
+        allow_insecure => true,
+      } ~>
+      tomcat::service { 'tomcat7078-first':
+        catalina_home  => '/opt/apache-tomcat7078',
+        catalina_base  => '/opt/tomcat7078-first',
+        service_ensure => 'running',
+      }
+    MANIFEST
+    it 'applies the manifest without error' do
+      apply_manifest(pp, catch_failures: true, acceptable_exit_codes: [0, 2])
+    end
+    it 'tomcat7-first should contain the jar when jar not deployed' do
+        let(:file) { '/opt/tomcat7/first/lib/hello.jar' }
+        expect(file).to be_an_existing_file
+    end
+  end
+
 end

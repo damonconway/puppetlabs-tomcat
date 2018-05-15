@@ -101,6 +101,13 @@ describe 'Acceptance case one', unless: stop_test do
         war_source     => '#{SAMPLE_WAR}',
         allow_insecure => true,
       }
+      tomcat::jar { 'jar_one.jar':
+        user  => 'tomcat8',
+        group => 'tomcat8',
+        catalina_base  => '/opt/apache-tomcat/tomcat8-jsvc',
+        jar_source     => '#{SAMPLE_JAR}',
+        allow_insecure => true,
+      }
       tomcat::setenv::entry { 'JAVA_HOME':
         user  => 'tomcat8',
         group => 'tomcat8',
@@ -198,6 +205,23 @@ describe 'Acceptance case one', unless: stop_test do
       shell('curl localhost:80/war_one/hello.jsp', acceptable_exit_codes: 0) do |r|
         r.stdout.should eq('')
       end
+    end
+  end
+
+  context 'un-deploy the jar with verification' do
+    pp = <<-MANIFEST
+      tomcat::jar { 'jar_one.jar':
+        catalina_base => '/opt/apache-tomcat/tomcat8-jsvc',
+        jar_source    => '#{SAMPLE_JAR}',
+        jar_ensure    => absent,
+      }
+    MANIFEST
+    it 'applies the manifest without error' do
+      apply_manifest(pp, catch_failures: true, acceptable_exit_codes: [0, 2])
+    end
+    it 'does not have deployed the jar' do
+        let(:file) { '/opt/apache-tomcat/tomcat8-jsvc/lib/hello.jar' }
+        expect(file).not_to be_an_existing_file
     end
   end
 
